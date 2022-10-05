@@ -18,6 +18,15 @@ class Account:
     """Account contract wrapper."""
 
     # pylint: disable=too-many-arguments
+    CONTRACT_CLASS: ContractClass = None  # loaded lazily
+    CONTRACT_PATH = "accounts_artifacts/OpenZeppelin/starkware/Account"
+
+    # Precalculated to save time
+    # from starkware.starknet.core.os.class_hash import compute_class_hash
+    # HASH = compute_class_hash(contract_class=Account.get_contract_class())
+    HASH = 3402683751377530443983214567614005351557398466586817795691471859298905028019
+    HASH_BYTES = to_bytes(HASH)
+
     def __init__(
         self,
         starknet_wrapper,
@@ -61,7 +70,7 @@ class Account:
         await starknet.state.state.deploy_contract(self.address, self.class_hash_bytes)
 
         await starknet.state.state.set_storage_at(
-            self.address, get_selector_from_name("Account_public_key"), self.public_key
+            self.address, get_selector_from_name("public_key"), self.public_key
         )
 
         # set initial balance
@@ -76,3 +85,19 @@ class Account:
         await starknet.state.state.set_storage_at(
             fee_token_address, balance_address + 1, initial_balance_uint256.high
         )
+
+        contract = StarknetContract(
+            state=starknet.state,
+            abi=contract_class.abi,
+            contract_address=self.address,
+            deploy_call_info=None,
+        )
+
+        await self.starknet_wrapper.store_contract(
+            self.address, contract, contract_class
+        )
+
+
+from starkware.starknet.core.os.class_hash import compute_class_hash
+HASH = compute_class_hash(contract_class=Account.get_contract_class())
+print(HASH)
