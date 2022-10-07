@@ -5,6 +5,7 @@ A server exposing Starknet functionalities as API endpoints.
 import asyncio
 import os
 import sys
+import logging
 
 from waitress import serve
 from paste.translogger import TransLogger
@@ -27,7 +28,7 @@ from .devnet_config import DevnetConfig, DumpOn, parse_args
 
 app = Flask(__name__)
 CORS(app)
-
+logger = logging.getLogger("bilbowloggins")
 print("""░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ░░░░░░░░░░░░░▄▄▄▄▄▄▄░░░░░░░░░
 ░░░░░░░░░▄▀▀▀░░░░░░░▀▄░░░░░░░
@@ -117,11 +118,17 @@ def main():
 
     asyncio.run(state.starknet_wrapper.initialize())
 
+    fileLogger = logging.FileHandler(f"./.{args.port}.log")
+    fileLogger.setLevel(logging.DEBUG)
+    fileLogger.setFormatter(logging.Formatter('%(message)s'))
+    logger.addHandler(fileLogger)
+    logger.propagate = False
+    logger.setLevel(logging.DEBUG)
     try:
         print(f" * Listening on http://{args.host}:{args.port}/ (Press CTRL+C to quit)")
         main_pid = os.getpid()
         serve(
-            TransLogger(app),
+            TransLogger(app, logger=logger, setup_console_handler=False),
             listen=f'{args.host}:{args.port}',
             channel_timeout=args.timeout,
             connection_limit=1000
