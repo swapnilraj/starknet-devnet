@@ -21,7 +21,7 @@ DEFAULT_ACCOUNT_PATH = os.path.abspath(
         os.pardir,
         "accounts_artifacts",
         "OpenZeppelin",
-        "0.5.0",
+        "starkware",
         "Account.cairo",
         "Account.json",
     )
